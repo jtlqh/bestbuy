@@ -15,13 +15,11 @@ class BestbuyProductItem(scrapy.Item):
     model = scrapy.Field()
     skuId = scrapy.Field()
     product = scrapy.Field()
-    avg_rating = scrapy.Field()
-    total_reviews = scrapy.Field()
-    q_and_a = scrapy.Field()
-    recommended = scrapy.Field()
+    price = scrapy.Field()
     user = scrapy.Field()
     rating = scrapy.Field()
     helpful = scrapy.Field()
     unhelpful = scrapy.Field()
+    recommended = scrapy.Field()
 
     

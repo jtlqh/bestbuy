@@ -30,20 +30,16 @@ class BestbuySpider(Spider):
         #print(len(rows))
        #print('=' * 50)
         for row in rows:
-            model = row.xpath('.//div[@class="sku-model"]/div[1]/span[2]/text()').extract_first()
-            skuId = row.xpath('.//div[@class="sku-model"]/div[2]/span[2]/text()').extract_first()            
-            text = row.xpath('.//div[@class="c-ratings-reviews v-small"]/p/text()').extract_first()
-            avg_rating, _, total_reviews = tuple(re.findall('[\d.]+', text))
-            meta = {'model':model, 'skuId':skuId, 'avg_rating':avg_rating, 'total_reviews':total_reviews}
             url = row.xpath('.//div[@class="sku-title"]/h4/a/@href').extract_first()
-            yield Request(url = 'https://www.bestbuy.com' + url, meta=meta, callback = self.parse_product)
+            yield Request(url = 'https://www.bestbuy.com' + url,  callback = self.parse_product)
 
     def parse_product(self, response):
         # product first review page
         product = response.xpath('//div[@class="sku-title"]/h1/text()').extract_first()
-        q_and_a = response.xpath('//div[@class="ugc-qna-stats ugc-stat"]/a/text()').extract_first()
-        q_and_a = re.findall('\d+', q_and_a)[0]
-        #print(product)
+        model = response.xpath('//div[@class="model product-data"]/span[2]/text()').extract_first()
+        skuId = response.xpath('//div[@class="sku product-data"]/span[2]/text()').extract_first()            
+
+       #print(product)
         #print(q_and_a)
         #print('='*50)
 
@@ -51,28 +47,19 @@ class BestbuySpider(Spider):
 
         meta ={
             'product':product, 
-            'model':response.meta['model'], 
-            'skuId':response.meta['skuId'], 
-            'q_and_a':q_and_a, 
-            'avg_rating':response.meta['avg_rating'],
-            'total_reviews':response.meta['total_reviews']
+            'model':model, 
+            'skuId':skuId
             }
         yield Request(url = "https://www.bestbuy.com" + review_url, meta = meta, callback = self.parse_review_detail)
 
 
     def parse_review_detail(self, response):
-        review_bars = response.xpath('//div[@class="rating-bars col-xs-5"]/ul/li')
-        recommended = response.xpath('//div[@class="donut-percent"]/span/text()').extract_first()
 
         product_item = BestbuyProductItem()
         product_item['model'] = response.meta['model']
         product_item['skuId'] = response.meta['skuId']
         product_item['product'] = response.meta['product']
-        product_item['q_and_a'] = response.meta['q_and_a']
-        product_item['avg_rating'] = response.meta['avg_rating']
-        product_item['total_reviews'] = response.meta['total_reviews']
-        product_item['recommended'] = recommended
-        
+       
         
        
         reviews = response.xpath('//li[@class="review-item"]')
@@ -89,14 +76,18 @@ class BestbuySpider(Spider):
                 unhelpful = review.xpath('.//div[@class="feedback-display"]/button[2]/text()').extract()[1]
             except ValueError:
                 unhelpful = ''
+            try:
+                recommended = review.xpath('.//p[@class="v-fw-medium  ugc-recommendation"]/i/@class').extract_first().split('-')[1]
+                recommended =['no','yes'][int(recommended=='confirm')]
+            except:
+                recommended = ''
 
-            
-            product_item['skuId'] = response.meta['skuId']
+
             product_item['user'] = user
             product_item['helpful'] = helpful
             product_item['unhelpful'] = unhelpful
             product_item['rating'] = rating
-
+            product_item['recommended'] = recommended
             yield product_item
 
 
