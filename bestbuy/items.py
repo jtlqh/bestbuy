@@ -21,5 +21,7 @@ class BestbuyProductItem(scrapy.Item):
     helpful = scrapy.Field()
     unhelpful = scrapy.Field()
     recommended = scrapy.Field()
-
-    
+    color = scrapy.Field()       
+    price =scrapy.Field()       
+    storage=scrapy.Field()
+    text=scrapy.Field()
